@@ -477,19 +477,21 @@ SELECT @rownum:=@rownum+1 as rownum, A.*from member A ORDER BY A.midx desc;
  );
  -- 외래키 제약조건 추가(FOREIGN KEY 외래키 추가)
  alter table board
- add constraint fk FOREIGN KEY(midx) REFERENCES MEMBER(midx);
+ add constraint bidx_midx_fk FOREIGN KEY(midx) REFERENCES MEMBER(midx);
 
 select * from information_schema.table_constraints where table_name = 'board';
-alter table board drop foreign key board_idfk_1;
+alter table board drop foreign key;
 
 -- alter table 테이블명 add constraint 외래키명
 -- foregin key 컬럼명 REFERENCES 테이블명 (컬럼명);
 
 INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
-values('글제목','글내용', '글작성자', 0,0,null, '211.111.222.330',1);
+values('글제목','글내용', '글작성자', 0,0,null, '211.111.222.330',3);
+
+ delete from board where midx= 1;
 
 SELECT*from member;
-SELECT*from board;
+SELECT*from board where midx order by midx asc;
 
 
 -- 추천수 기본값 0으로 초기화
@@ -508,27 +510,94 @@ values('글제목2','글내용2', '글작성자2', 0,0,null, '211.111.222.330',2
 select A.subject from board A inner join member B on B.midx
  = A.midx where B.memberid ='test101';
 
+ -- member 테이블 데이터 수정하기 회원아이디가 test2인
+
+
+  -- update 에서 where조건을 사용하지 않으면 전체데이터 변경될 가능성이 있음
+
+  -- 회원번호가 홀수인사람들은 주소를 서울로
+  SELECT 3 mod 2 from dual; -- 나머지 연산자
+
+  UPDATE member set memberaddr = '서울' where midx mod 2 =1;
+  SELECT * from member;
+
+ -- 회원번호가 3의배수인 경우 성별을 여성으로 변경, 취미는 야구라고 변경
+ UPDATE member set membergender = 'F', memberhobby = '야구' where midx mod 3 = 0;
+ SELECT * from member;
+
+ UPDATE member set memberbirth = '19801109' where midx mod 7 = 0;
+ SELECT * from member;
+ UPDATE member set membername = '정몽주' where midx mod 17= 0;
 
 
 
+-- 이름을 변경해야지~ memberid 하고  이름이라는 글자를 붙여서 고유하게 만들기
+-- 두글자를 붙이기 함수 concat을 사용해서 만들어야지
+-- 확인
+
+SELECT concat('이름', memberid) from member;
+UPDATE MEMBER SET membername = concat('이름',memberid)
+SELECT * from member;
+
+UPDATE member set memberaddr = '' where midx mod 23 = 0;
+
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('안녕하세요','내용입니다', '김마마', 0,0,null, null,5);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('질문있습니다','게시판내용입니다', '나그네', 0,0,null, null,6);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('좋은소식','좋은소식이 왔어요', '행인', 0,0,null, null,7);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('첫눈','첫눈이 왔어요', '왕눈이', 0,0,null, null,8);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('휴일','10월 3일은 개천절', '단군', 0,0,null, null,9);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('휴일2','10월9일은 한글날', '세종', 0,0,null, null,10);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('가을','가을 날씨 좋다', '가을이', 0,0,null, null,11);
+INSERT INTO Board(subject,contents, writer,recom, viewcnt,filename,ip,midx )
+values('월동대비','겨울잠자기', '북극곰', 0,0,null, null,12);
+
+SELECT * from board;
+
+-- 게시글을 최근 등록된 순서대로 나열
+SELECT * from board ORDER by bidx desc;
+
+-- 3번째 게시글을 쓴 사람의 이름을 출력하시오
+SELECT * from member A inner join board B on A.midx=B.midx;
+SELECT A.membername from member A inner join board B on A.midx=B.midx where B.bidx=7;
+
+-- 아이디가 test123인 사람이 쓴 게시글을 모두 출력
+SELECT * from member A inner join board B on A.midx=B.midx;
+select B.* from member A inner join board B on A.midx=B.midx where A.memberid ='test2';-- 확인필요
+-- 대전에서 사는 사람들이 쓴 글의 게시물 수 출력
+SELECT * from member A inner join board B on A.midx=B.midx;
+select count(*) from member A inner join board B on A.midx=B.midx where A.memberaddr='대전';
+-- 8번게시물의 조회수를 +1 업데이트 해주세요
+update board set viewcnt = viewcnt+1 where bidx=8;
+select * from board;
+
+SELECT * from member;
+
+-- 기준점이 되는 모든 데이터(테이블)들은 나타내주고 다른 테이블의 데이터는 공통적인 컬럼으로 묶어져 있는 데이터만 추출한다.
+left outer join
+
+select *from member A left outer join board B on A.pk=B.pk;
+-- 회원들중에 게시글을 쓴 게시글의  수를 모두 출력(게시글을 쓰지 않았으면 0)
+select A.midx, count(B.midx) from member A left outer join board B on A.midx = B.midx;
+
+alter table board
+add CONSTRAINT bidx_midx_fk foreign key(midx) references member(midx);
+select * from information_schema.table_constraints where constraint_schema = 'aws0822';
+
+alter table board drop foreign key bidx_midx_fk;
+
+-- 회원들 중 사는 지역별로 게시물을 쓴 사람들의 인원수를 출력
+select * from member;
+-- 홍길동3인 사람이 쓴 글이 ip가 있으면 ip있음이라고 출력하고 아이피가 없으면 ip없음이라고 출력하세요
+select if(B.ip is null,'아이피없음','아이피 있음') as ipyn
+	from member A join board B on A.midx=b.midx
+	where A.membername='이름hong';
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- 주요키 외래키 member-board 연결확인;
